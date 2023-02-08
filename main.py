@@ -25,8 +25,8 @@ def bankruptcyData(directory):
     plt.show()
     print(outcome)
 
-    X = np.array([industrial_risk, management_risk, financial_flexibility, credibility,
-                 competitiveness, operation_risk])
+    X = np.array([[industrial_risk], [management_risk], [financial_flexibility], [credibility],
+                 [competitiveness], [operation_risk]])
 
     return X
     # return rawData
@@ -42,15 +42,60 @@ def loss(h, y):
     return (-y * np.log(h) - (1 - y) * np.log(1 - h)).mean()
 
 
-class LogisticRegression:
-    def fit(self, x, y):
-        pass
+def gradient(self, x, y):
+    N, D = x.shape
+    yh = sigmoid(np.dot(x, self.w))    # predictions  size N
+    grad = np.dot(x.T, yh - y)/N        # divide by N because cost is mean over N points
+    return grad
 
-    def prediction(self, x):
-        pass
+
+class LogisticRegression:
+
+    def __init__(self, add_bias=True, learning_rate=.1, epsilon=1e-4, max_iters=1e5, verbose=False):
+        self.add_bias = add_bias
+        self.learning_rate = learning_rate
+        self.epsilon = epsilon  # to get the tolerance for the norm of gradients
+        self.max_iters = max_iters  # maximum number of iteration of gradient descent
+        self.verbose = verbose
+
+    def fit(self, x, y):
+        if x.ndim == 1:
+            x = x[:, None]
+        if self.add_bias:
+            N = x.shape[0]
+            x = np.column_stack([x, np.ones(N)])
+        N, D = x.shape
+        self.w = np.zeros(D)
+        g = np.inf
+        t = 0
+        # the code snippet below is for gradient descent
+        while np.linalg.norm(g) > self.epsilon and t < self.max_iters:
+            g = self.gradient(x, y)
+            self.w = self.w - self.learning_rate * g
+            t += 1
+
+        if self.verbose:
+            print(f'terminated after {t} iterations, with norm of the gradient equal to {np.linalg.norm(g)}')
+            print(f'the weight found: {self.w}')
+        return self
+
+    def predict(self, x):
+        if x.ndim == 1:
+            x = x[:, None]
+        Nt = x.shape[0]
+        if self.add_bias:
+            x = np.column_stack([x, np.ones(Nt)])
+        yh = sigmoid(np.dot(x, self.w))  # predict output
+        return yh
+
+
+LogisticRegression.gradient = gradient  # initialize the gradient method of the LogisticRegression class with gradient function
 
 
 if __name__ == "__main__":
-    bankruptcyData("C:/Users/Eren/Downloads/Qualitative_Bankruptcy (250 "
-                   "instances)/Qualitative_Bankruptcy/Qualitative_Bankruptcy.data.txt")
+    X = bankruptcyData("C:/Users/Eren/Downloads/Qualitative_Bankruptcy (250 "
+                       "instances)/Qualitative_Bankruptcy/Qualitative_Bankruptcy.data.txt")
+
+    reg = LogisticRegression()
+    reg.fit(X[:1], y=np.array([0, 1]))
 
