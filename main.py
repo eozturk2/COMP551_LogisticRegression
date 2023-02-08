@@ -61,13 +61,17 @@ def GradientDescent(x, y, lr=.01, eps=1e-2, w_init=None):
     else:
         w = np.zeros(D)
 
+    w = np.insert(w, 0, 0)
+
     g = np.inf
     iterations = 0
     gra = list()
     w1 = list()
     iters = list()
 
-    while abs(np.linalg.norm(g)) > eps:#and iterations < 10000:
+    x = np.column_stack([x, np.ones(N)])
+
+    while abs(np.linalg.norm(g)) > eps: # and iterations < 100000:
         g = gradient(w, x, y)
         w -= lr*g
         w1.append(w[0])
@@ -78,6 +82,7 @@ def GradientDescent(x, y, lr=.01, eps=1e-2, w_init=None):
     plt.plot(np.array(iters), np.array(w1))
     plt.plot(np.array(iters), gra)
     plt.show()
+
     return w
 
 
@@ -117,7 +122,6 @@ if __name__ == "__main__":
 
     print("\nCustom class")
     print("_______________________________________")
-    w2 = GradientDescent(X_train, y_train)
+    w2 = GradientDescent(X_train, y_train, lr=0.02, eps=1e-2)
     print(w2)
-    print(cost(w2, X, outcome))
-    print(cost(weights.T, X, outcome))
+
