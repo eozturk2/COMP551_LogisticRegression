@@ -8,8 +8,9 @@ from matplotlib import pyplot as plt
 def bankruptcyData(directory):
     rawData = np.loadtxt(directory, dtype=str, delimiter=',')
 
-    input_mapping = {'P': 2, 'A': 1, 'N': 0}
-    output_mapping = {'B': 0, 'NB': 1}
+    # Positive means good, no risk
+    input_mapping = {'P': -1, 'A': 0, 'N': 1}
+    output_mapping = {'B': 1, 'NB': 0}
 
     industrial_risk = np.array([input_mapping[item] for item in rawData[:, 0]])
     management_risk = np.array([input_mapping[item] for item in rawData[:, 1]])
@@ -70,8 +71,10 @@ def GradientDescent(x, y, lr=.01, eps=1e-2, w_init=None):
     iters = list()
 
     x = np.column_stack([x, np.ones(N)])
+    N, D = x.shape
+    w = np.zeros(D)
 
-    while abs(np.linalg.norm(g)) > eps: # and iterations < 100000:
+    while abs(np.linalg.norm(g)) > eps:
         g = gradient(w, x, y)
         w -= lr*g
         w1.append(w[0])
@@ -90,38 +93,58 @@ class LogisticRegressionCls:
     def fit(self, x, y):
         pass
 
-    def prediction(self, x):
+    def predict(self, x):
         pass
+
+
+def predict(x, w):
+    if x.ndim == 1:
+        x = x[:, None]
+    Nt = x.shape[0]
+    # x = np.column_stack([x, np.ones(Nt)])
+    yh = activation(np.dot(x, w))            #predict output
+    return yh
 
 
 if __name__ == "__main__":
     outcome, X = bankruptcyData("C:/Users/Eren/Downloads/Qualitative_Bankruptcy (250 "
                                 "instances)/Qualitative_Bankruptcy/Qualitative_Bankruptcy.data.txt")
-    print(X)
-    print(X.shape)
+    # print(X)
+    # print(X.shape)
 
-    print(outcome)
-    print(outcome.T)
+    # print(outcome)
+    # print(outcome.T)
 
-    X_train, X_test, y_train, y_test = train_test_split(X, outcome, test_size=0.2, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, outcome, test_size=0.4, random_state=42)
+
+    print(y_train)
 
     # Maybe they all play an equal role?
     w = np.array([1, 1, 1, 1, 1, 1])
-    print(cost(w, X, outcome))
+    # print(cost(w, X, outcome))
 
     w = np.array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1])
-    clf = LogisticRegression()
+    clf = LogisticRegression(tol=1e-2, fit_intercept=True)
     clf.fit(X_train, y_train)
     print("sk.learn")
     print("_______________________________________")
     weights = clf.coef_
+    intercept = clf.intercept_
     print(weights)
+    print(intercept)
     y_pred = clf.predict(X_test)
     accuracy = accuracy_score(y_test, y_pred)
     print("Accuracy:", accuracy)
 
     print("\nCustom class")
     print("_______________________________________")
-    w2 = GradientDescent(X_train, y_train, lr=0.02, eps=1e-2)
-    print(w2)
+    w2 = GradientDescent(X_train, y_train, lr=0.002, eps=1e-2)
+    # The last weight will be the intercept so consider that seperately
+    w_real = w2[:6]
+    intercept = w2[6]
+
+    estimated = predict(X_test, w_real)
+    estimated = np.where(estimated > 0.5, 1, 0)
+    print(y_test)
+    print(estimated)
 
