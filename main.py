@@ -76,7 +76,7 @@ def GradientDescent(x, y, lr=.01, eps=1e-2, w_init=None):
 
     while abs(np.linalg.norm(g)) > eps:
         g = gradient(w, x, y)
-        w -= lr*g
+        w -= lr * g
         w1.append(w[0])
         iterations += 1
         iters.append(iterations)
@@ -102,8 +102,14 @@ def predict(x, w):
         x = x[:, None]
     Nt = x.shape[0]
     # x = np.column_stack([x, np.ones(Nt)])
-    yh = activation(np.dot(x, w))            #predict output
+    yh = activation(np.dot(x, w))  # predict output
     return yh
+
+
+def getAccuracyPercentage(estimation, reality, decision_boundary=0.5):
+    bEstimation = np.where(estimation > decision_boundary, 1, 0)
+    error_vector = np.bitwise_xor(reality, bEstimation)
+    return 1 - (np.sum(error_vector) / len(error_vector))
 
 
 if __name__ == "__main__":
@@ -115,7 +121,7 @@ if __name__ == "__main__":
     # print(outcome)
     # print(outcome.T)
 
-    X_train, X_test, y_train, y_test = train_test_split(X, outcome, test_size=0.4, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, outcome, test_size=0.9, random_state=42)
 
     print(y_train)
 
@@ -145,6 +151,6 @@ if __name__ == "__main__":
 
     estimated = predict(X_test, w_real)
     estimated = np.where(estimated > 0.5, 1, 0)
-    print(y_test)
-    print(estimated)
-
+    vector = np.bitwise_xor(y_test, estimated)
+    errors = np.sum(vector)
+    print(getAccuracyPercentage(estimated, y_test))
