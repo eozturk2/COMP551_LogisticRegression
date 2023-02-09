@@ -1,127 +1,29 @@
 import numpy as np
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score
-from sklearn.model_selection import train_test_split
 from matplotlib import pyplot as plt
+import pandas as pd
+import random
+#from sklearn import linear_model
 
+data = pd.read_excel('https://archive.ics.uci.edu/ml/machine-learning-databases/00242/ENB2012_data.xlsx')
+data_zscore = data.copy()
+data = data.dropna()#Drop any line that includes NULL
+data = data.drop_duplicates()#Drop any duplicate data
+cols = data.columns
+#USe z_score to standardize and remove the outliers
+for col in cols:
+    data_col = data[col]
+    z_score = (data_col - data_col.mean()) / data_col.std()#Standardize the data
+    data_zscore[col] = z_score.abs()>2
+data_drop = data
+for col in cols:
+    data_drop = data_drop[data_zscore[col] == False]
+df = data_drop.reset_index(drop=True)#df is the dataset we are going to analyse
+m = 0
+print(df.describe())
 
-def bankruptcyData(directory):
-    rawData = np.loadtxt(directory, dtype=str, delimiter=',')
+for col in df.columns:#Normalization of the data
+  df[col]=(df[col].subtract(df[col].mean())).div(df[col].std()).round(3)
 
-    input_mapping = {'P': 2, 'A': 1, 'N': 0}
-    output_mapping = {'B': 0, 'NB': 1}
-
-    industrial_risk = np.array([input_mapping[item] for item in rawData[:, 0]])
-    management_risk = np.array([input_mapping[item] for item in rawData[:, 1]])
-    financial_flexibility = np.array([input_mapping[item] for item in rawData[:, 2]])
-    credibility = np.array([input_mapping[item] for item in rawData[:, 3]])
-    competitiveness = np.array([input_mapping[item] for item in rawData[:, 4]])
-    operation_risk = np.array([input_mapping[item] for item in rawData[:, 5]])
-    outcome = np.array([output_mapping[item] for item in rawData[:, 6]])
-
-    X = np.array([industrial_risk, management_risk, financial_flexibility, credibility,
-                  competitiveness, operation_risk])
-
-    return outcome, X.T
-    # return rawData
-
-
-# Define the sigmoid function
-def activation(x):
-    return 1 / (1 + np.exp(-x))
-
-
-# Define the loss function
-def loss(h, y):
-    return (-y * np.log(h) - (1 - y) * np.log(1 - h)).mean()
-
-
-# y is the vector with the actual values of the function (bankrupt-not bankrupt)
-# x is the data
-# w is the vector of weights
-def cost(w, x, y):
-    z = np.dot(x, w)
-    return np.mean(y * np.log1p(np.exp(-z)) + (1 - y) * np.log1p(np.exp(z)))
-
-
-# y is the vector with the actual values of the function (bankrupt-not bankrupt)
-# x is the data
-# w is the vector of weights
-def gradient(w, x, y):
-    N = x.shape[0]
-    D = x.shape[1]
-    return np.dot(x.T, activation(np.dot(x, w)) - y) / N
-
-
-def GradientDescent(x, y, lr=.01, eps=1e-2, w_init=None):
-    N = x.shape[0]
-    D = x.shape[1]
-    if w_init is not None:
-        w = w_init
-    else:
-        w = np.zeros(D)
-
-    w = np.insert(w, 0, 0)
-
-    g = np.inf
-    iterations = 0
-    gra = list()
-    w1 = list()
-    iters = list()
-
-    x = np.column_stack([x, np.ones(N)])
-
-    while abs(np.linalg.norm(g)) > eps: # and iterations < 100000:
-        g = gradient(w, x, y)
-        w -= lr*g
-        w1.append(w[0])
-        iterations += 1
-        iters.append(iterations)
-        gra.append(g)
-
-    plt.plot(np.array(iters), np.array(w1))
-    plt.plot(np.array(iters), gra)
-    plt.show()
-
-    return w
-
-
-class LogisticRegressionCls:
-    def fit(self, x, y):
-        pass
-
-    def prediction(self, x):
-        pass
-
-
-if __name__ == "__main__":
-    outcome, X = bankruptcyData("C:/Users/Eren/Downloads/Qualitative_Bankruptcy (250 "
-                                "instances)/Qualitative_Bankruptcy/Qualitative_Bankruptcy.data.txt")
-    print(X)
-    print(X.shape)
-
-    print(outcome)
-    print(outcome.T)
-
-    X_train, X_test, y_train, y_test = train_test_split(X, outcome, test_size=0.2, random_state=42)
-
-    # Maybe they all play an equal role?
-    w = np.array([1, 1, 1, 1, 1, 1])
-    print(cost(w, X, outcome))
-
-    w = np.array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1])
-    clf = LogisticRegression()
-    clf.fit(X_train, y_train)
-    print("sk.learn")
-    print("_______________________________________")
-    weights = clf.coef_
-    print(weights)
-    y_pred = clf.predict(X_test)
-    accuracy = accuracy_score(y_test, y_pred)
-    print("Accuracy:", accuracy)
-
-    print("\nCustom class")
-    print("_______________________________________")
-    w2 = GradientDescent(X_train, y_train, lr=0.02, eps=1e-2)
-    print(w2)
+print(df.describe())
+print(df)
 
